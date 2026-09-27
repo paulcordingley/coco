@@ -67,17 +67,18 @@ LINE    clra
         std     T2              ; T2 = 0:x0
         ldd     T1
         subd    T2              ; D = x1-x0, signed, -255..255
+        std     DX              ; save D before B gets reused below
         bpl     LSXPOS
-        ldb     #$FF
-        stb     SX              ; SX = -1
+        ldd     DX
         coma
         comb
         addd    #1
         std     DX              ; DX = |x1-x0|
+        ldb     #$FF
+        stb     SX              ; SX = -1
         bra     LDONEX
 LSXPOS  ldb     #1
         stb     SX              ; SX = +1
-        std     DX              ; DX = |x1-x0|
 LDONEX
 
         clra
@@ -88,17 +89,18 @@ LDONEX
         std     T2
         ldd     T1
         subd    T2              ; D = y1-y0, signed, -255..255
+        std     DY              ; save D before B gets reused below
         bpl     LSYPOS
         ldb     #$FF
         stb     SY              ; SY = -1
-        std     DY              ; DY = y1-y0 = -|y1-y0| already
-        bra     LDONEY
-LSYPOS  ldb     #1
-        stb     SY              ; SY = +1
+        bra     LDONEY          ; DY = y1-y0 = -|y1-y0| already
+LSYPOS  ldd     DY
         coma
         comb
         addd    #1
         std     DY              ; DY = -(y1-y0) = -|y1-y0|
+        ldb     #1
+        stb     SY              ; SY = +1
 LDONEY
 
         ldd     DX
