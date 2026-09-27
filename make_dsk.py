@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
-"""Build a 35-track Disk Extended Color BASIC (DECB) .DSK image containing
-ASCII BASIC programs.  Usage: make_dsk.py OUT.DSK FILE.BAS [FILE2.BAS ...]"""
+"""Build a 35-track Disk Extended Color BASIC (DECB) .DSK image from ASCII
+.BAS programs and/or DECB-format machine-language .BIN files.
+Usage: make_dsk.py OUT.DSK FILE.BAS [FILE2.BIN ...]"""
 import os
 import sys
 
@@ -29,10 +30,15 @@ def main():
     dir_off = offset(DIR_TRACK, 3)
 
     for n, path in enumerate(files):
-        data = open(path, "rb").read().replace(b"\r\n", b"\n").replace(b"\n", b"\r")
-        base, ext = os.path.splitext(os.path.basename(path).upper())
+        base, ext_str = os.path.splitext(os.path.basename(path).upper())
+        is_binary = ext_str == ".BIN"
+        raw = open(path, "rb").read()
+        if is_binary:
+            data = raw                 # DECB binary: already has its own preamble/postamble
+        else:
+            data = raw.replace(b"\r\n", b"\n").replace(b"\n", b"\r")
         name = base[:8].ljust(8).encode()
-        ext = (ext[1:] or "BAS")[:3].ljust(3).encode()
+        ext = (ext_str[1:] or "BAS")[:3].ljust(3).encode()
 
         nsec = max(1, -(-len(data) // SECSIZE))
         ngran = -(-nsec // SECS_PER_GRAN)
@@ -49,8 +55,8 @@ def main():
         entry = bytearray(32)
         entry[0:8] = name
         entry[8:11] = ext
-        entry[11] = 0x00          # file type: BASIC program
-        entry[12] = 0xFF          # ASCII flag
+        entry[11] = 0x02 if is_binary else 0x00   # file type: ML binary or BASIC program
+        entry[12] = 0x00 if is_binary else 0xFF   # ASCII flag
         entry[13] = grans[0]      # first granule
         entry[14:16] = last_bytes.to_bytes(2, "big")
         e = dir_off + n * 32

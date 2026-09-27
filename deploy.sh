@@ -11,6 +11,6 @@ if [ ! -d "$DEST" ]; then
     exit 1
 fi
 
-python3 make_dsk.py CUBE.DSK CUBE.BAS
+./build.sh
 cp CUBE.DSK "$DEST/CUBE.DSK"
 echo "Deployed CUBE.DSK to $DEST"

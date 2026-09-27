@@ -1,2 +1,7 @@
 *.DSK
+*.BIN
+*.LST
+*.SYM
+tables.inc
+CUBEASM.BAS
 .DS_Store
